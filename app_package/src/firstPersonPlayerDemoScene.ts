@@ -1,67 +1,60 @@
-import { DeviceType, PointerInput } from "@babylonjs/core/DeviceInput/InputDevices/deviceEnums";
-import { DeviceSource } from "@babylonjs/core/DeviceInput/InputDevices/deviceSource";
-import { DeviceSourceManager } from "@babylonjs/core/DeviceInput/InputDevices/deviceSourceManager";
 import { Engine } from "@babylonjs/core/Engines/engine";
-import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
-import { Color3, Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math";
+import { Color3 } from "@babylonjs/core/Maths/math";
 import { AmmoJSPlugin } from "@babylonjs/core/Physics/Plugins/ammoJSPlugin";
-import { Scene } from "@babylonjs/core/scene";
 import "@babylonjs/core/Physics/physicsEngineComponent";
-import { FreeCamera } from "@babylonjs/core/Cameras/freeCamera";
-import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
 import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
 import { PhysicsImpostor } from "@babylonjs/core/Physics/physicsImpostor";
-import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
-import { InputSampler, InputSamplerAxis } from "./inputSampler";
 import { FirstPersonPlayer } from "./firstPersonPlayer";
+import { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
+import { Scene } from "@babylonjs/core/scene";
+import "@babylonjs/core/Helpers/sceneHelpers";
 
-class Playground {
-    private static CreateRandomMaterial(scene: Scene, name: string) {
-        const mat = new StandardMaterial(name, scene);
-        mat.diffuseColor = new Color3(Math.random(), Math.random(), Math.random());
-        return mat;
-    }
+function createRandomMaterial(scene: Scene, name: string) {
+    const mat = new PBRMaterial(name, scene);
+    mat.albedoColor = new Color3(Math.random(), Math.random(), Math.random());
+    mat.metallic = 0.1;
+    mat.roughness = 0.7;
+    return mat;
+}
 
-    public static CreateScene(engine: Engine, canvas: HTMLCanvasElement): Scene {
-        const scene = new Scene(engine);
-        const physicsPlugin = new AmmoJSPlugin();
-        scene.enablePhysics(undefined, physicsPlugin);
+function createScene(engine: Engine, canvas: HTMLCanvasElement): Scene {
+    const scene = new Scene(engine);
+    const physicsPlugin = new AmmoJSPlugin();
+    scene.enablePhysics(undefined, physicsPlugin);
 
-        const light = new HemisphericLight("light1", new Vector3(0, 1, 0), scene);
-        light.intensity = 0.7;
+    scene.createDefaultEnvironment({ createGround: false, createSkybox: false });
 
-        const box = MeshBuilder.CreateBox("box", { size: 5 }, scene);
-        box.position.set(12, 2.5, 7);
-        box.physicsImpostor = new PhysicsImpostor(box, PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 1 }, scene);
-        box.material = Playground.CreateRandomMaterial(scene, "box_mat");
+    const box = MeshBuilder.CreateBox("box", { size: 5 }, scene);
+    box.position.set(12, 2.5, 7);
+    box.physicsImpostor = new PhysicsImpostor(box, PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 1 }, scene);
+    box.material = createRandomMaterial(scene, "box_mat");
 
-        const ramp = MeshBuilder.CreateBox("ramp", { size: 1 }, scene);
-        ramp.scaling.set(13, 0.2, 2);
-        ramp.rotation.z = Math.PI / 5;
-        ramp.position.set(4.3, 1.095, 7)
-        ramp.physicsImpostor = new PhysicsImpostor(ramp, PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.5 }, scene);
-        ramp.material = Playground.CreateRandomMaterial(scene, "ramp_mat");
-        
-        const ground = MeshBuilder.CreateGround("ground1", { width: 30, height: 30, subdivisions: 2 }, scene);
-        ground.physicsImpostor = new PhysicsImpostor(ground, PhysicsImpostor.PlaneImpostor, { mass: 0, restitution: 0.5 }, scene);
-        ground.material = Playground.CreateRandomMaterial(scene, "ground1_mat");
+    const ramp = MeshBuilder.CreateBox("ramp", { size: 1 }, scene);
+    ramp.scaling.set(13, 0.2, 2);
+    ramp.rotation.z = Math.PI / 5;
+    ramp.position.set(4.3, 1.095, 7)
+    ramp.physicsImpostor = new PhysicsImpostor(ramp, PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.5 }, scene);
+    ramp.material = createRandomMaterial(scene, "ramp_mat");
+    
+    const ground = MeshBuilder.CreateGround("ground1", { width: 30, height: 30, subdivisions: 2 }, scene);
+    ground.physicsImpostor = new PhysicsImpostor(ground, PhysicsImpostor.PlaneImpostor, { mass: 0, restitution: 0.5 }, scene);
+    ground.material = createRandomMaterial(scene, "ground1_mat");
 
-        for (let idx = 1; idx < 6; ++idx) {
-            const block = MeshBuilder.CreateBox("block_" + idx, { size: 0.8 }, scene);
-            block.position.set(-5, idx * 0.8, -6);
-            block.physicsImpostor = new PhysicsImpostor(block, PhysicsImpostor.BoxImpostor, { mass: 20, restitution: 0.5, friction: 10 }, scene);
-            block.material = Playground.CreateRandomMaterial(scene, "block_" + idx + "_mat");
-        };
+    for (let idx = 1; idx < 6; ++idx) {
+        const block = MeshBuilder.CreateBox("block_" + idx, { size: 0.8 }, scene);
+        block.position.set(-5, idx * 0.8, -6);
+        block.physicsImpostor = new PhysicsImpostor(block, PhysicsImpostor.BoxImpostor, { mass: 20, restitution: 0.5, friction: 10 }, scene);
+        block.material = createRandomMaterial(scene, "block_" + idx + "_mat");
+    };
 
-        const player = new FirstPersonPlayer(scene);
+    new FirstPersonPlayer(scene);
 
-        canvas.onclick = () => {
-            canvas.requestPointerLock();
-            canvas.requestFullscreen();
-        };
+    canvas.onclick = () => {
+        canvas.requestPointerLock();
+        canvas.requestFullscreen();
+    };
 
-        return scene;
-    }
+    return scene;
 }
 
 export interface InitializeBabylonAppOptions {
@@ -78,7 +71,7 @@ export function initializeBabylonApp(options: InitializeBabylonAppOptions) {
 
     const canvas = options.canvas;
     const engine = new Engine(canvas);
-    const scene = Playground.CreateScene(engine, canvas);
+    const scene = createScene(engine, canvas);
     engine.runRenderLoop(() => {
         scene.render();
     });
@@ -86,4 +79,3 @@ export function initializeBabylonApp(options: InitializeBabylonAppOptions) {
         engine.resize();
     });
 }
-
