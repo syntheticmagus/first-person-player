@@ -52,7 +52,7 @@ export class FirstPersonPlayer {
         const impostor = this._collision.physicsImpostor!;
         let jumpFrameDelay = 0;
         while (true) {
-            const SLIDE_THRESHOLD = 0.01 * Math.PI / 3;
+            const SLIDE_THRESHOLD = Math.PI / 3;
 
             raycastFrom.copyFrom(this._collision.position);
             raycastTo.copyFrom(this._collision.position);
@@ -80,7 +80,7 @@ export class FirstPersonPlayer {
             right.scaleAndAddToRef(input.get(InputSamplerAxis.D) - input.get(InputSamplerAxis.A), movement);
             movement.normalize();
             Vector3.TransformNormalToRef(movement, floorRotationTransform, movement);
-            movement.scaleAndAddToRef(0.08 + 0.08 * input.get(InputSamplerAxis.Shift), this._collision.position);
+            movement.scaleAndAddToRef(0.06 + 0.05 * input.get(InputSamplerAxis.Shift), this._collision.position);
 
             if (jumpFrameDelay > 0) {
                 --jumpFrameDelay;
@@ -97,8 +97,8 @@ export class FirstPersonPlayer {
                 impostor.friction = 0;
             }
 
-            this._camera.rotation.y += input.get(InputSamplerAxis.MouseDY) / 200;
-            this._camera.rotation.x += input.get(InputSamplerAxis.MouseDX) / 200;
+            this._camera.rotation.y += input.get(InputSamplerAxis.MouseDY) / 300;
+            this._camera.rotation.x += input.get(InputSamplerAxis.MouseDX) / 300;
             this._camera.rotation.x = Math.min(Math.PI / 2.2, Math.max(-Math.PI / 3, this._camera.rotation.x));
 
             yield;
