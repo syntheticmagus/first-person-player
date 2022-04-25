@@ -1,7 +1,7 @@
 {
-  "name": "app_package",
-  "version": "1.0.0",
-  "description": "",
+  "name": "@syntheticmagus/first-person-player",
+  "version": "0.0.1",
+  "description": "A basic physics-enabled first-person player using Ammo.js.",
   "main": "lib/index.js",
   "types": "lib",
   "scripts": {
@@ -11,6 +11,10 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "devDependencies": {
     "typescript": "^4.4.3"
   },

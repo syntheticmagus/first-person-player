@@ -1,10 +1,10 @@
-import { initializeBabylonApp } from "app_package";
+import { runTestScene } from "@syntheticmagus/first-person-player";
 
 let assetsHostUrl;
 if (DEV_BUILD) {
     assetsHostUrl = "http://127.0.0.1:8181/";
 } else {
-    assetsHostUrl = "https://nonlocal-assets-host-url/";
+    assetsHostUrl = "https://syntheticmagus.github.io/first-person-player-assets/";
 }
 
 const ammoScript = document.createElement("script");
@@ -17,7 +17,7 @@ document.body.style.margin = "0";
 document.body.style.padding = "0";
 
 const title = document.createElement("p");
-title.innerText = "Babylon.js NPM Package Template";
+title.innerText = "First-Person Player Demo Scene";
 title.style.fontSize = "32pt";
 title.style.textAlign = "center";
 document.body.appendChild(title);
@@ -37,6 +37,6 @@ div.appendChild(canvas);
 
 setTimeout(() => {
     Ammo().then(() => {
-        initializeBabylonApp({ canvas: canvas, assetsHostUrl: assetsHostUrl });
+        runTestScene(canvas);
     });
 }, 1000);

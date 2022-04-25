@@ -17,6 +17,6 @@
     "webpack-dev-server": "^4.2.1"
   },
   "dependencies": {
-    "app_package": "file:../app_package"
+    "@syntheticmagus/first-person-player": "file:../app_package"
   }
 }

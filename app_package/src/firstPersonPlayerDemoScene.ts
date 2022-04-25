@@ -57,19 +57,7 @@ function createScene(engine: Engine, canvas: HTMLCanvasElement): Scene {
     return scene;
 }
 
-export interface InitializeBabylonAppOptions {
-    canvas: HTMLCanvasElement;
-    assetsHostUrl?: string;
-}
-
-export function initializeBabylonApp(options: InitializeBabylonAppOptions) {
-    if (options.assetsHostUrl) {
-        console.log("Assets host URL: " + options.assetsHostUrl!);
-    } else {
-        console.log("No assets host URL provided");
-    }
-
-    const canvas = options.canvas;
+export function runTestScene(canvas: HTMLCanvasElement) {
     const engine = new Engine(canvas);
     const scene = createScene(engine, canvas);
     engine.runRenderLoop(() => {
