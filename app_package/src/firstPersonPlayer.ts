@@ -19,7 +19,7 @@ export class FirstPersonPlayer {
         this._scene = scene;
         this._physicsEngine = scene.getPhysicsEngine()!;
         
-        this._collision = MeshBuilder.CreateSphere("player", { segments: 3, diameterX: 0.4, diameterY: 1.7, diameterZ: 0.4 }, scene);
+        this._collision = MeshBuilder.CreateSphere("player", { segments: 3, diameterX: 0.4, diameterY: 1.8, diameterZ: 0.4 }, scene);
         this._collision.position.y = 1;
         this._collision.physicsImpostor = new PhysicsImpostor(this._collision, PhysicsImpostor.SphereImpostor, { mass: 10, restitution: 0, friction: 10000 }, scene);
         {
@@ -49,8 +49,10 @@ export class FirstPersonPlayer {
         let m: Matrix;
 
         const input = new InputSampler(this._scene.getEngine());
+        const impostor = this._collision.physicsImpostor!;
+        let jumpFrameDelay = 0;
         while (true) {
-            const SLIDE_THRESHOLD = Math.PI / 3;
+            const SLIDE_THRESHOLD = 0.01 * Math.PI / 3;
 
             raycastFrom.copyFrom(this._collision.position);
             raycastTo.copyFrom(this._collision.position);
@@ -80,14 +82,19 @@ export class FirstPersonPlayer {
             Vector3.TransformNormalToRef(movement, floorRotationTransform, movement);
             movement.scaleAndAddToRef(0.08 + 0.08 * input.get(InputSamplerAxis.Shift), this._collision.position);
 
-            if (floorAngle < SLIDE_THRESHOLD) {
-                this._collision.physicsImpostor!.friction = 10000;
+            if (jumpFrameDelay > 0) {
+                --jumpFrameDelay;
+            }
 
-                if (raycastResult.hasHit && raycastResult.hitDistance < 0.9 && input.get(InputSamplerAxis.Space) > 0) {
-                    this._collision.physicsImpostor!.applyImpulse(Vector3.UpReadOnly.scale(10), Vector3.ZeroReadOnly);
+            if (floorAngle < SLIDE_THRESHOLD) {
+                impostor.friction = 10000;
+
+                if (jumpFrameDelay < 1 && raycastResult.hasHit && raycastResult.hitDistance < 0.9 && input.get(InputSamplerAxis.Space) > 0) {
+                    impostor.applyImpulse(Vector3.UpReadOnly.scale(30), Vector3.ZeroReadOnly);
+                    jumpFrameDelay = 5;
                 }
             } else {
-                this._collision.physicsImpostor!.friction = 0;
+                impostor.friction = 0;
             }
 
             this._camera.rotation.y += input.get(InputSamplerAxis.MouseDY) / 200;
