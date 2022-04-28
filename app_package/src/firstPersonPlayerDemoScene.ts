@@ -1,5 +1,5 @@
 import { Engine } from "@babylonjs/core/Engines/engine";
-import { Color3 } from "@babylonjs/core/Maths/math";
+import { Color3, Vector3 } from "@babylonjs/core/Maths/math";
 import { AmmoJSPlugin } from "@babylonjs/core/Physics/Plugins/ammoJSPlugin";
 import "@babylonjs/core/Physics/physicsEngineComponent";
 import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
@@ -46,8 +46,8 @@ function createScene(engine: Engine, canvas: HTMLCanvasElement): Scene {
         block.physicsImpostor = new PhysicsImpostor(block, PhysicsImpostor.BoxImpostor, { mass: 20, restitution: 0.5, friction: 10 }, scene);
         block.material = createRandomMaterial(scene, "block_" + idx + "_mat");
     };
-
-    new FirstPersonPlayer(scene);
+    
+    new FirstPersonPlayer(Vector3.ZeroReadOnly, scene);
 
     canvas.onclick = () => {
         canvas.requestPointerLock();

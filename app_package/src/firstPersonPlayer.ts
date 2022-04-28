@@ -15,12 +15,13 @@ export class FirstPersonPlayer {
     private readonly _camera: FreeCamera;
     private readonly _collision: Mesh;
 
-    public constructor(scene: Scene) {
+    public constructor(position: Vector3, scene: Scene) {
         this._scene = scene;
         this._physicsEngine = scene.getPhysicsEngine()!;
         
         this._collision = MeshBuilder.CreateSphere("player", { segments: 3, diameterX: 0.4, diameterY: 1.8, diameterZ: 0.4 }, scene);
-        this._collision.position.y = 1;
+        this._collision.position.copyFrom(position);
+        this._collision.position.y += 1;
         this._collision.physicsImpostor = new PhysicsImpostor(this._collision, PhysicsImpostor.SphereImpostor, { mass: 10, restitution: 0, friction: 10000 }, scene);
         {
             const angularFactor = this._collision.physicsImpostor.physicsBody.getAngularFactor();
