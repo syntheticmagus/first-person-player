@@ -1,6 +1,6 @@
 {
   "name": "@syntheticmagus/first-person-player",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A basic physics-enabled first-person player using Ammo.js.",
   "main": "lib/index.js",
   "types": "lib",

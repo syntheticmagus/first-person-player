@@ -1,9 +1,12 @@
-import { IPhysicsEngine } from "@babylonjs/core";
 import { FreeCamera } from "@babylonjs/core/Cameras/freeCamera";
+import { TargetCamera } from "@babylonjs/core/Cameras/targetCamera";
 import { Matrix, Quaternion, TmpVectors, Vector3 } from "@babylonjs/core/Maths/math";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
+import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
+import { Observable } from "@babylonjs/core/Misc/observable";
 import "@babylonjs/core/Misc/observableCoroutine";
+import { IPhysicsEngine } from "@babylonjs/core/Physics/IPhysicsEngine";
 import { PhysicsImpostor } from "@babylonjs/core/Physics/physicsImpostor";
 import { Scene } from "@babylonjs/core/scene";
 import { InputSampler, InputSamplerAxis } from "./inputSampler";
@@ -13,11 +16,24 @@ export class FirstPersonPlayer {
     private readonly _physicsEngine: IPhysicsEngine;
 
     private readonly _camera: FreeCamera;
+    private readonly _cameraParent: TransformNode;
     private readonly _collision: Mesh;
 
-    public constructor(position: Vector3, scene: Scene) {
+    private readonly _updateObservable: Observable<Scene>;
+
+    public get camera(): TargetCamera {
+        return this._camera;
+    }
+
+    public moveSpeed: number;
+    public sprintSpeed: number;
+    public jumpForce: number;
+    public lookSensitivity: number;
+
+    public constructor(scene: Scene, position: Vector3, updateObservable?: Observable<Scene>) {
         this._scene = scene;
         this._physicsEngine = scene.getPhysicsEngine()!;
+        this._updateObservable = updateObservable ?? scene.onBeforePhysicsObservable;
         
         this._collision = MeshBuilder.CreateSphere("player", { segments: 3, diameterX: 0.4, diameterY: 1.8, diameterZ: 0.4 }, scene);
         this._collision.position.copyFrom(position);
@@ -30,13 +46,24 @@ export class FirstPersonPlayer {
             angularFactor.setZ(0);
         }
 
+        this._cameraParent = new TransformNode("firstPersonPlayerCameraParent", this._scene);
+        this._cameraParent.position.copyFrom(this._collision.position);
+        this._scene.onAfterPhysicsObservable.add(() => {
+            this._cameraParent.position.copyFrom(this._collision.position);
+        });
+
         this._camera = new FreeCamera("firstPersonPlayerCamera", new Vector3(), scene);
         this._camera.minZ = 0.01;
         this._camera.maxZ = 100;
         this._camera.position.y = 0.5
-        this._camera.parent = this._collision;
+        this._camera.parent = this._cameraParent;
 
-        this._scene.onBeforeRenderObservable.runCoroutineAsync(this._perFrameUpdateCoroutine());
+        this._updateObservable.runCoroutineAsync(this._perFrameUpdateCoroutine());
+
+        this.moveSpeed = 0.06;
+        this.sprintSpeed = 0.05;
+        this.jumpForce = 30;
+        this.lookSensitivity = 1 / 300;
     }
     
     private *_perFrameUpdateCoroutine() {
@@ -81,7 +108,7 @@ export class FirstPersonPlayer {
             right.scaleAndAddToRef(input.get(InputSamplerAxis.D) - input.get(InputSamplerAxis.A), movement);
             movement.normalize();
             Vector3.TransformNormalToRef(movement, floorRotationTransform, movement);
-            movement.scaleAndAddToRef(0.06 + 0.05 * input.get(InputSamplerAxis.Shift), this._collision.position);
+            movement.scaleAndAddToRef(this.moveSpeed + this.sprintSpeed * input.get(InputSamplerAxis.Shift), this._collision.position);
 
             if (jumpFrameDelay > 0) {
                 --jumpFrameDelay;
@@ -91,15 +118,15 @@ export class FirstPersonPlayer {
                 impostor.friction = 10000;
 
                 if (jumpFrameDelay < 1 && raycastResult.hasHit && raycastResult.hitDistance < 0.9 && input.get(InputSamplerAxis.Space) > 0) {
-                    impostor.applyImpulse(Vector3.UpReadOnly.scale(30), Vector3.ZeroReadOnly);
+                    impostor.applyImpulse(Vector3.UpReadOnly.scale(this.jumpForce), Vector3.ZeroReadOnly);
                     jumpFrameDelay = 5;
                 }
             } else {
                 impostor.friction = 0;
             }
 
-            this._camera.rotation.y += input.get(InputSamplerAxis.MouseDY) / 300;
-            this._camera.rotation.x += input.get(InputSamplerAxis.MouseDX) / 300;
+            this._camera.rotation.y += input.get(InputSamplerAxis.MouseDY) * this.lookSensitivity;
+            this._camera.rotation.x += input.get(InputSamplerAxis.MouseDX) * this.lookSensitivity;
             this._camera.rotation.x = Math.min(Math.PI / 2.2, Math.max(-Math.PI / 3, this._camera.rotation.x));
 
             yield;

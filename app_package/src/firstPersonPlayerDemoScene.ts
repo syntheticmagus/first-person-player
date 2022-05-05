@@ -47,7 +47,8 @@ function createScene(engine: Engine, canvas: HTMLCanvasElement): Scene {
         block.material = createRandomMaterial(scene, "block_" + idx + "_mat");
     };
     
-    new FirstPersonPlayer(Vector3.ZeroReadOnly, scene);
+    const player = new FirstPersonPlayer(scene, Vector3.ZeroReadOnly);
+    player.camera.setTarget(ramp.absolutePosition);
 
     canvas.onclick = () => {
         canvas.requestPointerLock();
