@@ -21,6 +21,8 @@ export class FirstPersonPlayer {
 
     private readonly _updateObservable: Observable<Scene>;
 
+    private readonly _inputSampler: InputSampler;
+
     public get camera(): TargetCamera {
         return this._camera;
     }
@@ -30,10 +32,16 @@ export class FirstPersonPlayer {
     public jumpForce: number;
     public lookSensitivity: number;
 
+    public setKeyBinding(axis: InputSamplerAxis, key: string) {
+        this._inputSampler.setKeyBinding(axis, key);
+    }
+
     public constructor(scene: Scene, position: Vector3, updateObservable?: Observable<Scene>) {
         this._scene = scene;
         this._physicsEngine = scene.getPhysicsEngine()!;
         this._updateObservable = updateObservable ?? scene.onBeforePhysicsObservable;
+
+        this._inputSampler = new InputSampler(scene.getEngine());
         
         this._collision = MeshBuilder.CreateSphere("player", { segments: 3, diameterX: 0.4, diameterY: 1.8, diameterZ: 0.4 }, scene);
         this._collision.position.copyFrom(position);
@@ -76,7 +84,6 @@ export class FirstPersonPlayer {
         const floorRotationTransform = new Matrix();
         let m: Matrix;
 
-        const input = new InputSampler(this._scene.getEngine());
         const impostor = this._collision.physicsImpostor!;
         let jumpFrameDelay = 0;
         while (true) {
@@ -104,11 +111,11 @@ export class FirstPersonPlayer {
             forward.y = 0;
             forward.normalize();
             movement.set(0, 0, 0);
-            forward.scaleAndAddToRef(input.get(InputSamplerAxis.W) - input.get(InputSamplerAxis.S), movement);
-            right.scaleAndAddToRef(input.get(InputSamplerAxis.D) - input.get(InputSamplerAxis.A), movement);
+            forward.scaleAndAddToRef(this._inputSampler.get(InputSamplerAxis.Forward) - this._inputSampler.get(InputSamplerAxis.Backward), movement);
+            right.scaleAndAddToRef(this._inputSampler.get(InputSamplerAxis.Right) - this._inputSampler.get(InputSamplerAxis.Left), movement);
             movement.normalize();
             Vector3.TransformNormalToRef(movement, floorRotationTransform, movement);
-            movement.scaleAndAddToRef(this.moveSpeed + this.sprintSpeed * input.get(InputSamplerAxis.Shift), this._collision.position);
+            movement.scaleAndAddToRef(this.moveSpeed + this.sprintSpeed * this._inputSampler.get(InputSamplerAxis.Sprint), this._collision.position);
 
             if (jumpFrameDelay > 0) {
                 --jumpFrameDelay;
@@ -117,7 +124,7 @@ export class FirstPersonPlayer {
             if (floorAngle < SLIDE_THRESHOLD) {
                 impostor.friction = 10000;
 
-                if (jumpFrameDelay < 1 && raycastResult.hasHit && raycastResult.hitDistance < 0.9 && input.get(InputSamplerAxis.Space) > 0) {
+                if (jumpFrameDelay < 1 && raycastResult.hasHit && raycastResult.hitDistance < 0.9 && this._inputSampler.get(InputSamplerAxis.Jump) > 0) {
                     impostor.applyImpulse(Vector3.UpReadOnly.scale(this.jumpForce), Vector3.ZeroReadOnly);
                     jumpFrameDelay = 5;
                 }
@@ -125,8 +132,8 @@ export class FirstPersonPlayer {
                 impostor.friction = 0;
             }
 
-            this._camera.rotation.y += input.get(InputSamplerAxis.MouseDY) * this.lookSensitivity;
-            this._camera.rotation.x += input.get(InputSamplerAxis.MouseDX) * this.lookSensitivity;
+            this._camera.rotation.y += this._inputSampler.get(InputSamplerAxis.MouseDY) * this.lookSensitivity;
+            this._camera.rotation.x += this._inputSampler.get(InputSamplerAxis.MouseDX) * this.lookSensitivity;
             this._camera.rotation.x = Math.min(Math.PI / 2.2, Math.max(-Math.PI / 3, this._camera.rotation.x));
 
             yield;

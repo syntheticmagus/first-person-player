@@ -7,12 +7,12 @@ import { Observer } from "@babylonjs/core/Misc/observable";
 import { Nullable } from "@babylonjs/core/types";
 
 export enum InputSamplerAxis {
-    W,
-    A,
-    S,
-    D,
-    Space,
-    Shift,
+    Forward,
+    Left,
+    Backward,
+    Right,
+    Jump,
+    Sprint,
     MouseX,
     MouseY,
     _temporalValuesStart,
@@ -22,8 +22,8 @@ export enum InputSamplerAxis {
 }
 
 export class InputSampler {
-    private _deviceSourceManager: DeviceSourceManager;
-    private _ownsDeviceSourceManager: boolean;
+    private readonly _deviceSourceManager: DeviceSourceManager;
+    private readonly _ownsDeviceSourceManager: boolean;
 
     private _keyboard: Nullable<DeviceSource<DeviceType.Keyboard>> = null;
     private _keyboardObserver: Nullable<Observer<IKeyboardEvent>> = null;
@@ -31,8 +31,10 @@ export class InputSampler {
     private _mouse: Nullable<DeviceSource<DeviceType.Mouse>> = null;
     private _mouseObserver: Nullable<Observer<IWheelEvent | IPointerEvent>> = null;
 
-    private _values: Float32Array;
-    private _nextValues: Float32Array;
+    private readonly _values: Float32Array;
+    private readonly _nextValues: Float32Array;
+
+    private readonly _keyBindings: Map<InputSamplerAxis, string>;
 
     constructor (engine: Engine, deviceSourceManager?: DeviceSourceManager) {
         this._deviceSourceManager = deviceSourceManager ?? new DeviceSourceManager(engine);
@@ -50,6 +52,18 @@ export class InputSampler {
             this._values.set(this._nextValues);
             this._nextValues.fill(0, InputSamplerAxis._temporalValuesStart);
         });
+
+        this._keyBindings = new Map<InputSamplerAxis, string>();
+        this._keyBindings.set(InputSamplerAxis.Forward, "w");
+        this._keyBindings.set(InputSamplerAxis.Left, "a");
+        this._keyBindings.set(InputSamplerAxis.Backward, "s");
+        this._keyBindings.set(InputSamplerAxis.Right, "d");
+        this._keyBindings.set(InputSamplerAxis.Jump, " ");
+        this._keyBindings.set(InputSamplerAxis.Sprint, "shift");
+    }
+
+    public setKeyBinding(axis: InputSamplerAxis, key: string): void {
+        this._keyBindings.set(axis, key);
     }
 
     private _setDeviceSources(): void {
@@ -63,23 +77,23 @@ export class InputSampler {
             this._keyboardObserver = this._keyboard.onInputChangedObservable.add((eventData) => {
                 let key;
                 switch (eventData.key.toLowerCase()) {
-                    case "w":
-                        key = InputSamplerAxis.W;
+                    case this._keyBindings.get(InputSamplerAxis.Forward):
+                        key = InputSamplerAxis.Forward;
                         break;
-                    case "a":
-                        key = InputSamplerAxis.A;
+                    case this._keyBindings.get(InputSamplerAxis.Left):
+                        key = InputSamplerAxis.Left;
                         break;
-                    case "s":
-                        key = InputSamplerAxis.S;
+                    case this._keyBindings.get(InputSamplerAxis.Backward):
+                        key = InputSamplerAxis.Backward;
                         break;
-                    case "d":
-                        key = InputSamplerAxis.D;
+                    case this._keyBindings.get(InputSamplerAxis.Right):
+                        key = InputSamplerAxis.Right;
                         break;
-                    case " ":
-                        key = InputSamplerAxis.Space;
+                    case this._keyBindings.get(InputSamplerAxis.Jump):
+                        key = InputSamplerAxis.Jump;
                         break;
-                    case "shift":
-                        key = InputSamplerAxis.Shift;
+                    case this._keyBindings.get(InputSamplerAxis.Sprint):
+                        key = InputSamplerAxis.Sprint;
                         break;
                     default:
                         return;
